@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\course_group;
 use App\Exports\WebinarsExport;
 use App\Http\Controllers\Admin\traits\WebinarChangeCreator;
 use App\Http\Controllers\Controller;
@@ -36,6 +37,7 @@ use App\Models\WebinarFilterOption;
 use App\Models\WebinarPartnerTeacher;
 use App\User;
 use App\Models\Webinar;
+use App\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -329,7 +331,100 @@ class WebinarController extends Controller
 
         return view('admin.webinars.create', $data);
     }
+    public function create2()
+    {
+        $this->authorize('admin_store_categories_create');
+        $teachers = User::where('role_name', Role::$teacher)->get();
+        $course = Webinar::where('type', 'course')->get();
+        $data = [
+            'pageTitle' => trans('admin/main.category_new_page_title'),
+            'teachers' => $teachers,
+            'courses' => $course
+        ];
+        return view('admin.course_group.create', $data);
+    }
+    public function create3()
+    {
+        removeContentLocale();
 
+        $this->authorize('admin_store_categories_list');
+
+        $categories = course_group::get();
+
+
+        //course_group::orderBy('id', 'desc')
+        //->paginate(10);
+
+        $data = [
+            'pageTitle' => trans('admin/main.categories'),
+            'categories' => $categories
+        ];
+
+
+
+        return view('admin.course_group.lists', $data);
+    }
+    public function create4(Request $request)
+    {
+        //  $this->authorize('admin_upcoming_courses_create');
+        /*
+        $rules = [
+            'type' => 'required|in:webinar,course,text_lesson',
+            'title' => 'required|max:255',
+            'thumbnail' => 'required',
+            'image_cover' => 'required',
+            'description' => 'required',
+            'teacher_id' => 'required|exists:users,id',
+            'category_id' => 'required|exists:categories,id',
+            'publish_date' => 'required',
+            'timezone' => 'required',
+            'capacity' => 'nullable|numeric',
+            'price' => 'nullable|numeric',
+            'duration' => 'nullable|numeric',
+            'sections' => 'nullable|numeric',
+            'parts' => 'nullable|numeric',
+            'course_progress' => 'nullable|numeric',
+        ];
+
+        $this->validate($request, $rules);
+*/
+
+        $curso = Webinar::find($request['course_id']);
+
+        if ($curso) {
+            $cantidadGrupos = course_group::where('curso_id', $curso->id)->count();
+            $nombreGrupo = 'grupo_' . $curso->slug . '_' . ($cantidadGrupos + 1);
+
+            // Crea un nuevo grupo con el nombre generado
+            $grupo = new course_group();
+            $grupo->name = $nombreGrupo;
+            $grupo->curso_id = $curso->id;
+            $grupo->instructor_id = $request['teacher_id'];
+            $grupo->save();
+            if (!empty($grupo)) {
+                if ($request->has('horario') && $request->input('horario') !== null) {
+                    $horario = $request->input('horario');
+
+                    if (is_array($horario) && count($horario) > 0) {
+                        $this->storeSchedule($request, $grupo->id);
+                    }
+                }
+
+
+                return redirect()->to(ENV("APP_URL") . getAdminPanelUrl() . "/grupos");
+            }
+        } else {
+            return "Curso no encontrado";
+        }
+
+
+
+
+        abort(404);
+    }
+    public function storeSchedule(Request $request, $id)
+    {
+    }
     public function store(Request $request)
     {
         $this->authorize('admin_webinars_create');
@@ -463,7 +558,7 @@ class WebinarController extends Controller
     public function edit(Request $request, $id)
     {
         $this->authorize('admin_webinars_edit');
-        $studyPlanChapters =StudyPlanChapter::where('webinar_id',$id)->get();
+        $studyPlanChapters = StudyPlanChapter::where('webinar_id', $id)->get();
         $webinar = Webinar::where('id', $id)
             ->with([
                 'tickets',
@@ -492,10 +587,10 @@ class WebinarController extends Controller
                 'tags',
                 'textLessons',
                 'assignments',
-                'studyPlanChapters'=> function ($query) {
+                'studyPlanChapters' => function ($query) {
                     $query->orderBy('order', 'asc');
                     $query->with([
-                        'textLessons'=> function ($query) {
+                        'textLessons' => function ($query) {
                             $query->orderBy('order', 'asc');
                         }
                     ]);
@@ -679,7 +774,8 @@ class WebinarController extends Controller
                 ]);
             }
         }
-        unset($data['_token'],
+        unset(
+            $data['_token'],
             $data['current_step'],
             $data['draft'],
             $data['get_next'],
@@ -756,7 +852,6 @@ class WebinarController extends Controller
                 $webinar->id,
                 true
             );
-
         } elseif ($reject) {
             sendNotification('course_reject', ['[c.title]' => $webinar->title], $webinar->teacher_id);
         }

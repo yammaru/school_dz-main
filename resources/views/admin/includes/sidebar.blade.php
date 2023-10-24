@@ -120,7 +120,25 @@
                     </ul>
                 </li>
             @endcan()
+            <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/bundles*', false)) and !request()->is(getAdminPanelUrl('/bundles/comments*', false))) ? 'active' : '' }}">
+                    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
+                    <i class="fas fa-sitemap"></i>
+                        <span>Grupos</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        @can('admin_bundles_list')
+                            <li class="{{ (request()->is(getAdminPanelUrl('/grupos', false)) and request()->get('type') == 'course') ? 'active' : '' }} ">
+                                <a href="{{ getAdminPanelUrl() }}/grupos" class="nav-link @if(!empty($sidebarBeeps['bundles']) and $sidebarBeeps['bundles']) beep beep-sidebar @endif">{{ trans('admin/main.lists') }}</a>
+                            </li>
+                        @endcan()
 
+                        @can('admin_bundles_create')
+                            <li class="{{ (request()->is(getAdminPanelUrl('/grupos/create', false))) ? 'active' : '' }} ">
+                                <a class="nav-link" href="{{ getAdminPanelUrl() }}/grupos/create">{{ trans('admin/main.new') }}</a>
+                            </li>
+                        @endcan()
+                    </ul>
+                </li>
             @can('admin_upcoming_courses')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/upcoming_courses*', false)) and !request()->is(getAdminPanelUrl('/upcoming_courses/comments*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">

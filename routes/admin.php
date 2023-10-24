@@ -254,7 +254,11 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => 'web'
                 Route::get('/{id}/delete', 'ForumTopicReportsController@delete');
             });
         });
-
+        Route::group(['prefix' => 'grupos'], function () {
+            Route::get('/create', 'WebinarController@create2');
+            Route::get('/', 'WebinarController@create3');
+            Route::post('/store', 'WebinarController@create4');
+        });
         Route::group(['prefix' => 'webinars'], function () {
             Route::get('/', 'WebinarController@index');
             Route::get('/create', 'WebinarController@create');
@@ -436,7 +440,6 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => 'web'
         Route::group(['prefix' => 'consultants'], function () {
             Route::get('/', 'ConsultantsController@index');
             Route::get('/excel', 'ConsultantsController@exportExcel');
-
         });
 
         Route::group(['prefix' => 'appointments'], function () {
@@ -1078,6 +1081,5 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => 'web'
             Route::get('/{id}/delete', 'StudyPlanChapterController@destroy');
             Route::post('/change', 'StudyPlanChapterController@change');
         });
-
     });
 });
